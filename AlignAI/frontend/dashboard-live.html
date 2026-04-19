@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ALIGNAI | Live Monitoring</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- MediaPipe Pose -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="w-64 bg-slate-900 text-white flex flex-col">
+  <div class="p-6 border-b border-slate-700">
+    <h1 class="text-xl font-bold text-teal-400">ALIGNAI</h1>
+    <p class="text-xs text-slate-400">Posture Coaching Hub</p>
+  </div>
+  <nav class="flex-1 p-4 space-y-2 text-sm">
+    <a href="dashboard-live.html" class="block px-4 py-2 rounded bg-teal-700">Live Monitor</a>
+    <a href="dashboard-progress.html" class="block px-4 py-2 rounded hover:bg-slate-800">Progress</a>
+  </nav>
+</aside>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="flex-1 flex flex-col">
+  <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
+    <h2 class="text-lg font-semibold text-gray-800">Live Posture Monitoring</h2>
+    <div class="flex items-center space-x-4">
+      <span class="text-gray-600 text-sm">Welcome, User</span>
+      <button class="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-500 text-sm">
+        Profile
+      </button>
+    </div>
+  </header>
+
+  <section class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Webcam Section -->
+    <div class="lg:col-span-2 bg-white rounded-xl shadow p-5">
+      <h3 class="text-md font-semibold text-gray-800 mb-3">Live Camera Feed</h3>
+      <div class="relative w-full h-[400px] bg-gray-200 rounded-lg flex items-center justify-center">
+        <video id="webcam" autoplay playsinline class="absolute top-0 left-0 w-full h-full object-cover" style="transform: scaleX(-1); border-radius:0.5rem;"></video>
+        <canvas id="skeletonCanvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+      </div>
+    </div>
+
+    <!-- Posture Feedback -->
+    <div class="bg-white rounded-xl shadow p-5 flex flex-col gap-4">
+      <h3 class="text-md font-semibold text-gray-800">Posture Status</h3>
+      <div id="posture-status" class="min-h-[60px] rounded-lg flex items-center justify-center text-sm font-medium"></div>
+      <div id="coaching-message" class="text-sm text-gray-600"></div>
+    </div>
+
+  </section>
+</main>
+
+<script>
+// -------- Posture Simulation --------
+const statusBox = document.getElementById("posture-status");
+const messageBox = document.getElementById("coaching-message");
+
+function simulatePosture() {
+  const postures = [
+    {status:"Good Posture", color:"bg-green-100 text-green-700", message:"Great! Your posture is aligned correctly."},
+    {status:"Slouching Detected", color:"bg-red-100 text-red-700", message:"Please sit straight and align your shoulders."},
+    {status:"Leaning Forward", color:"bg-yellow-100 text-yellow-700", message:"Move slightly back and keep your neck straight."}
+  ];
+  const random = postures[Math.floor(Math.random()*postures.length)];
+  statusBox.className = "min-h-[60px] rounded-lg flex items-center justify-center text-sm font-medium " + random.color;
+  statusBox.innerText = random.status;
+  messageBox.innerText = random.message;
+}
+simulatePosture();
+setInterval(simulatePosture, 5000);
+
+// -------- MediaPipe Pose Skeleton --------
+const video = document.getElementById("webcam");
+const canvas = document.getElementById("skeletonCanvas");
+const ctx = canvas.getContext("2d");
+
+// Request webcam access
+navigator.mediaDevices.getUserMedia({video:true})
+  .then(stream => { video.srcObject = stream; })
+  .catch(err => console.error("Camera access denied:", err));
+
+// Import helpers
+const {drawConnectors, drawLandmarks} = window;
+const {POSE_CONNECTIONS} = window;
+
+// Initialize Pose
+const pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
+pose.setOptions({
+  modelComplexity: 1,
+  smoothLandmarks: true,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5
+});
+
+// Draw skeleton each frame
+pose.onResults(results => {
+  if (!video.videoWidth) return;
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1,1); // mirror skeleton
+  if(results.poseLandmarks){
+    drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, {color:'#00FF00', lineWidth:4});
+    drawLandmarks(ctx, results.poseLandmarks, {color:'#FF0000', lineWidth:2});
+  }
+  ctx.restore();
+});
+
+// Run skeleton loop
+async function runSkeleton(){
+  if(video.readyState >= 2){
+    await pose.send({image: video});
+  }
+  requestAnimationFrame(runSkeleton);
+}
+
+// Start after video is ready
+video.addEventListener('loadeddata', () => runSkeleton());
+</script>
+
+</body>
+</html>

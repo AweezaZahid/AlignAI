@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ALIGNAI | Progress Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Chart.js for dynamic charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="w-64 bg-slate-900 text-white flex flex-col">
+  <div class="p-6 border-b border-slate-700">
+    <h1 class="text-xl font-bold text-teal-400">ALIGNAI</h1>
+    <p class="text-xs text-slate-400">Posture Coaching Hub</p>
+  </div>
+
+  <nav class="flex-1 p-4 space-y-2 text-sm">
+    <a href="dashboard-live.html" class="block px-4 py-2 rounded hover:bg-slate-800">
+      Live Monitor
+    </a>
+    <a href="dashboard-progress.html" class="block px-4 py-2 rounded bg-teal-700">
+      Progress
+    </a>
+  </nav>
+</aside>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="flex-1 flex flex-col">
+
+  <!-- Top Bar -->
+  <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
+    <h2 class="text-lg font-semibold text-gray-800">
+      Posture Progress & Analytics
+    </h2>
+    <div class="flex items-center space-x-4">
+      <span class="text-gray-600 text-sm">Welcome, User</span>
+      <button class="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-500 text-sm">
+        Profile
+      </button>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <section class="flex-1 p-6 space-y-6">
+
+    <!-- ===== SUMMARY CARDS ===== -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white rounded-xl shadow p-5">
+        <h3 class="text-sm text-gray-500 mb-1">Daily Correct Posture</h3>
+        <div id="daily-posture-percentage" class="text-3xl font-bold text-teal-700">
+          <!-- Dynamic Value -->
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-5">
+        <h3 class="text-sm text-gray-500 mb-1">Total Session Time</h3>
+        <div id="total-session-time" class="text-3xl font-bold text-gray-800">
+          <!-- Dynamic Value -->
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-5">
+        <h3 class="text-sm text-gray-500 mb-1">Sessions Today</h3>
+        <div id="session-count" class="text-3xl font-bold text-gray-800">
+          <!-- Dynamic Value -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DAILY PROGRESS CHART ===== -->
+    <div class="bg-white rounded-xl shadow p-5">
+      <h3 class="text-md font-semibold text-gray-800 mb-3">Daily Posture Trend</h3>
+      <canvas id="posture-chart" class="h-64 w-full"></canvas>
+    </div>
+
+    <!-- ===== SESSION HISTORY TABLE ===== -->
+    <div class="bg-white rounded-xl shadow p-5">
+      <h3 class="text-md font-semibold text-gray-800 mb-3">Session History</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="border-b text-gray-600">
+            <tr>
+              <th class="py-2 text-left">Date</th>
+              <th class="py-2 text-left">Session Duration</th>
+              <th class="py-2 text-left">Correct Posture %</th>
+            </tr>
+          </thead>
+          <tbody id="session-history">
+            <!-- Dynamic rows injected here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<script>
+// ================= DYNAMIC CHART EXAMPLE =================
+// Chart.js setup for Daily Posture Trend
+const ctx = document.getElementById('posture-chart').getContext('2d');
+const postureChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: [],       // Inject dates dynamically from backend
+    datasets: [{
+      label: 'Correct Posture %',
+      data: [],       // Inject posture scores dynamically
+      borderColor: 'rgba(34,197,94,1)',
+      backgroundColor: 'rgba(34,197,94,0.2)',
+      tension: 0.3,
+      fill: true
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, max: 100 } }
+  }
+});
+
+// ================= DYNAMIC SESSION TABLE =================
+// Example function to inject session data dynamically
+function updateSessionHistory(sessions) {
+  const tbody = document.getElementById('session-history');
+  tbody.innerHTML = ''; // clear previous rows
+  sessions.forEach(session => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="py-2">${session.date}</td>
+      <td class="py-2">${session.duration}</td>
+      <td class="py-2">${session.posture}%</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ================= DYNAMIC SUMMARY CARDS =================
+function updateSummaryCards(summary) {
+  document.getElementById('daily-posture-percentage').innerText = summary.dailyPosture + '%';
+  document.getElementById('total-session-time').innerText = summary.totalTime;
+  document.getElementById('session-count').innerText = summary.sessionsToday;
+}
+
+// Later, you can call:
+// updateSummaryCards({...})
+// updateSessionHistory([...])
+// Update postureChart.data.labels and .datasets[0].data dynamically
+</script>
+
+</body>
+</html>
