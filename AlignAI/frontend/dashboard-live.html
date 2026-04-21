@@ -31,8 +31,9 @@
   <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
     <h2 class="text-lg font-semibold text-gray-800">Live Posture Monitoring</h2>
     <div class="flex items-center space-x-4">
-      <span class="text-gray-600 text-sm">Welcome, User</span>
-      <button class="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-500 text-sm">
+     <span class="text-gray-600 text-sm">Welcome, User</span>
+      <button onclick="goToProfile()" 
+        class="bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-500 text-sm">
         Profile
       </button>
     </div>
@@ -60,6 +61,9 @@
 </main>
 
 <script>
+  function goToProfile() {
+  window.location.href = "user-profile.html";
+}
 // -------- Posture Simulation --------
 const statusBox = document.getElementById("posture-status");
 const messageBox = document.getElementById("coaching-message");
